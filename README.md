@@ -50,7 +50,6 @@ An LSTM-based deep learning model for sarcasm detection in text.
   LSTM+attention still does the sequence modeling and the two-input fusion.
 
   IMPORTANT — resource requirements
-  ----------------------------------
   Fine-tuning DistilBERT on ~1M examples is much heavier than the pure-LSTM
   version:
   - Needs a GPU (CPU will be extremely slow).
