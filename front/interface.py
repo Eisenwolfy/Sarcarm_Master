@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QMovie, QFont
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 
-from models import lstm_bert_cnn.py
+from models import final_model.py
 
 BACKGROUND_GIF = "sad-koi.gif"
 
