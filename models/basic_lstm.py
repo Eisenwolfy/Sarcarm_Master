@@ -10,9 +10,8 @@ from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
 
-# -----------------------------
+
 # CONFIG
-# -----------------------------
 DATA_PATH = "train-balanced-sarcasm.csv"
 
 VOCAB_SIZE = 20000
@@ -27,9 +26,8 @@ PATIENCE = 3
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 
-# -----------------------------
+
 # DATA
-# -----------------------------
 df = pd.read_csv(DATA_PATH)
 df = df.dropna(subset=["comment"])
 
@@ -59,9 +57,8 @@ X_val, X_test, y_val, y_test = train_test_split(
 
 print(f"Train: {len(X_train)}, Val: {len(X_val)}, Test: {len(X_test)}")
 
-# -----------------------------
+
 # VOCAB
-# -----------------------------
 PAD_TOKEN, OOV_TOKEN = "<PAD>", "<OOV>"
 
 counter = Counter()
@@ -83,9 +80,7 @@ def text_to_ids(text):
     return ids
 
 
-# -----------------------------
 # DATASET
-# -----------------------------
 class SarcasmDataset(Dataset):
     def __init__(self, texts, labels):
         self.texts = texts
@@ -109,9 +104,8 @@ train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True)
 val_loader = DataLoader(val_ds, batch_size=BATCH_SIZE)
 test_loader = DataLoader(test_ds, batch_size=BATCH_SIZE)
 
-# -----------------------------
+
 # MODEL
-# -----------------------------
 class SarcasmLSTM(nn.Module):
     def __init__(self, vocab_size, embed_dim, hidden_dim, pad_idx=0):
         super().__init__()
@@ -146,9 +140,8 @@ print(model)
 criterion = nn.BCEWithLogitsLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
-# -----------------------------
+
 # TRAINING
-# -----------------------------
 best_val_loss = float("inf")
 patience_counter = 0
 best_state = None
@@ -195,9 +188,8 @@ for epoch in range(1, EPOCHS + 1):
 if best_state is not None:
     model.load_state_dict(best_state)
 
-# -----------------------------
+
 # VALIDATION
-# -----------------------------
 model.eval()
 all_preds, all_labels, all_probs = [], [], []
 with torch.no_grad():
@@ -219,18 +211,17 @@ print(classification_report(all_labels, all_preds, target_names=["normal", "sarc
 print("Confusion matrix:")
 print(confusion_matrix(all_labels, all_preds))
 
-# -----------------------------
+
+
 # SAVING MODEL AND VOCAB
-# -----------------------------
 torch.save(model.state_dict(), "sarcasm_lstm_model.pt")
 with open("vocab.pkl", "wb") as f:
     pickle.dump(vocab, f)
 
 print("\nModel and vocabulary are saved (sarcasm_lstm_model.pt, vocab.pkl).")
 
-# -----------------------------
+
 # INFERENCE
-# -----------------------------
 def predict_sarcasm(text, threshold=0.5):
     model.eval()
     cleaned = clean_text(text)
