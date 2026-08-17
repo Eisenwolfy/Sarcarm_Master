@@ -24,7 +24,7 @@ MAX_LEN_PARENT = 40
 FREEZE_BERT_LAYERS = 2
 LSTM_HIDDEN_DIM = 64
 CNN_KERNEL_SIZES = [3, 4, 5]   # captures 3-gram, 4-gram, 5-gram local patterns
-CNN_NUM_FILTERS = 64 # filters per kernel size
+CNN_NUM_FILTERS = 64
 USE_METADATA = True
 SUBREDDIT_VOCAB_SIZE = 500
 SUBREDDIT_EMBED_DIM = 16
@@ -33,7 +33,7 @@ METADATA_HIDDEN_DIM = 32
 BATCH_SIZE = 32
 EPOCHS = 6
 BERT_LR = 2e-5
-HEAD_LR = 1e-3 # LSTM / CNN / metadata / classifier layers
+HEAD_LR = 1e-3
 WEIGHT_DECAY = 1e-5
 GRAD_CLIP_NORM = 1.0
 WARMUP_RATIO = 0.1
@@ -46,7 +46,7 @@ if device.type == "cpu":
     print("WARNING: no GPU detected. Training will be very slow.")
 
 
-# LOAD DATA (text + metadata columns)
+# LOAD DATA
 df = pd.read_csv(DATA_PATH)
 df = df.dropna(subset=["comment", "parent_comment"])
 
@@ -463,7 +463,7 @@ print("Confusion matrix:")
 print(confusion_matrix(all_labels, all_preds))
 
 
-# 11. SAVE MODEL + PREPROCESSING ARTIFACTS
+# SAVE MODEL + PREPROCESSING ARTIFACTS
 torch.save(model.state_dict(), "sarcasm_hybrid_model.pt")
 
 with open("preprocessing.pkl", "wb") as f:
