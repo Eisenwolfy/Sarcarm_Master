@@ -8,15 +8,10 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QMovie, QFont
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 
-import model  # architecture, preprocessing, predict() — see model.py
+import model
 
-BACKGROUND_GIF = "sad-koi.gif"  # optional — put any .gif next to this file
+BACKGROUND_GIF = "sad-koi.gif"
 
-
-# =====================================================================
-# BACKGROUND THREADS (keep the UI responsive while the model loads /
-# while a prediction is running — DistilBERT isn't instant)
-# =====================================================================
 class ModelLoaderThread(QThread):
     finished_ok = pyqtSignal()
     finished_error = pyqtSignal(str)
@@ -46,9 +41,6 @@ class PredictThread(QThread):
             self.finished_error.emit(str(e))
 
 
-# =====================================================================
-# MAIN WINDOW
-# =====================================================================
 class GifBackgroundApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -60,8 +52,6 @@ class GifBackgroundApp(QWidget):
         width, height = 889, 500
         self.setFixedSize(width, height)
         self.setWindowTitle("Sarcasm Detector")
-
-        # --- animated background (falls back to plain dark bg if missing) ---
         self.bg_label = QLabel(self)
         self.bg_label.setGeometry(0, 0, width, height)
 
@@ -73,7 +63,6 @@ class GifBackgroundApp(QWidget):
         else:
             self.setStyleSheet("background-color: #1a1a1a;")
 
-        # --- title / status ---
         self.title_label = QLabel("Sarcasm Detector")
         self.title_label.setStyleSheet("color: white; font-size: 20px; font-weight: bold;")
         self.title_label.setAlignment(Qt.AlignCenter)
@@ -82,7 +71,6 @@ class GifBackgroundApp(QWidget):
         self.status_label.setStyleSheet("color: #aaaaaa; font-size: 12px;")
         self.status_label.setAlignment(Qt.AlignCenter)
 
-        # --- input field ---
         self.input_field = QLineEdit()
         self.input_field.setFixedSize(width - 80, 50)
         self.input_field.setStyleSheet("""
@@ -98,7 +86,6 @@ class GifBackgroundApp(QWidget):
         self.input_field.setPlaceholderText("Paste a comment to check…")
         self.input_field.returnPressed.connect(self.handle_submit)
 
-        # --- parent comment field (optional context — improves accuracy) ---
         self.parent_field = QLineEdit()
         self.parent_field.setFixedSize(width - 80, 40)
         self.parent_field.setStyleSheet("""
@@ -114,7 +101,6 @@ class GifBackgroundApp(QWidget):
         self.parent_field.setPlaceholderText("Optional — what they were replying to")
         self.parent_field.returnPressed.connect(self.handle_submit)
 
-        # --- submit button ---
         self.button = QPushButton("Check")
         self.button.setFixedSize(150, 50)
         self.button.setFont(QFont("Segoe UI", 10, QFont.Bold))
@@ -140,7 +126,6 @@ class GifBackgroundApp(QWidget):
             }
         """)
 
-        # --- result ---
         self.result_label = QLabel("Result will appear here")
         self.result_label.setStyleSheet("color: white; font-size: 16px; font-weight: bold;")
         self.result_label.setAlignment(Qt.AlignCenter)
@@ -164,7 +149,6 @@ class GifBackgroundApp(QWidget):
             }
         """)
 
-        # --- layout ---
         layout = QVBoxLayout()
         layout.addStretch(1)
         layout.addWidget(self.title_label)
@@ -181,7 +165,6 @@ class GifBackgroundApp(QWidget):
 
         self.setLayout(layout)
 
-    # ------------------------------------------------------------------
     def _load_model_async(self):
         self.loader_thread = ModelLoaderThread()
         self.loader_thread.finished_ok.connect(self._on_model_loaded)
@@ -198,7 +181,6 @@ class GifBackgroundApp(QWidget):
         self.result_label.setText(f"Error: {message}")
         self.result_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: bold;")
 
-    # ------------------------------------------------------------------
     def handle_submit(self):
         if not self.model_ready:
             return
@@ -262,7 +244,6 @@ def main():
     ex = GifBackgroundApp()
     ex.show()
     sys.exit(app.exec_())
-
 
 if __name__ == "__main__":
     main()
