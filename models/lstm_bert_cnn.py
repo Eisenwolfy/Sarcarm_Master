@@ -50,7 +50,7 @@ if device.type == "cpu":
 df = pd.read_csv(DATA_PATH)
 df = df.dropna(subset=["comment", "parent_comment"])
 
-# subreddit/score can have occasional missing values; fill with safe defaults instead of dropping rows, since these are auxiliary signals, not the main input
+# fill with safe defaults 
 df["subreddit"] = df["subreddit"].fillna("<unknown>")
 df["score"] = pd.to_numeric(df["score"], errors="coerce").fillna(0)
 comments = df["comment"].astype(str).values
@@ -136,15 +136,6 @@ print("Tokenizer ready.")
 
 
 class SarcasmDataset(Dataset):
-    """
-    Returns everything the model needs for one example:
-    - tokenized comment (ids + attention mask)
-    - tokenized parent_comment (ids + attention mask)
-    - subreddit id (single integer, embedded inside the model)
-    - normalized score (single float)
-    - label
-    """
-
     def __init__(self, comment_texts, parent_texts, subs, raw_scores, labels_):
         self.comment_enc = tokenizer(
             list(comment_texts), truncation=True, padding="max_length",
@@ -189,7 +180,7 @@ test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE)
 
 # ATTENTION MODULE
 class Attention(nn.Module):
-    #Additive attention: learns to weight each token's LSTM output.
+    #Additive attention over LSTM output
     def __init__(self, hidden_dim):
         super().__init__()
         self.attn = nn.Linear(hidden_dim, hidden_dim)
@@ -209,8 +200,7 @@ class Attention(nn.Module):
 
 # CNN BRANCH
 class CNNTextBranch(nn.Module):
-    '''Runs several 1D convolutions with different kernel sizes over the BERT token embeddings, each followed by ReLU + max-over-time pooling.
-    This captures local n-gram-like patterns (fixed phrases), which is complementary to what the LSTM captures (long-range sequential flow)'''
+    #1D convolutions over the BERT token embeddings
 
     def __init__(self, input_dim, num_filters, kernel_sizes):
         super().__init__()
