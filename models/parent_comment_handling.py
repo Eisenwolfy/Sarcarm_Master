@@ -1,29 +1,3 @@
-"""
-Self-contained LSTM sarcasm detector (PyTorch) for the Reddit sarcasm dataset:
-https://www.kaggle.com/datasets/sherinclaudia/sarcastic-comments-on-reddit
-
-No external pretrained models are used (no GloVe, no BERT, etc.).
-Everything, including word embeddings, is learned from scratch using
-only this dataset.
-
-Improvements over the very first basic version:
-
-1. DUAL INPUT (comment + parent_comment)
-   Sarcasm on Reddit is often only obvious when you know what the comment
-   is replying to. We encode both the comment and its parent with separate
-   LSTM branches and combine them before classification.
-
-2. ATTENTION LAYER
-   Instead of using only the final LSTM hidden state, attention lets the
-   model learn to focus on the most informative words in the sequence
-   (e.g. "love", "favorite", "great" combined with a negative situation),
-   which is exactly the kind of contrast that signals sarcasm.
-
-3. Better regularization/training setup (dropout, weight decay,
-   gradient clipping, LR scheduler, early stopping) to reduce overfitting
-   and make training more stable, all without any external data or models.
-"""
-
 import re
 import pickle
 from collections import Counter
@@ -37,9 +11,8 @@ from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
 
-# =====================================================================
-# 0. CONFIG
-# =====================================================================
+ 
+# CONFIG
 DATA_PATH = "train-balanced-sarcasm.csv"
 
 VOCAB_SIZE = 20000
@@ -57,9 +30,8 @@ PATIENCE = 5
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Device:", device)
 
-# ------------------------------------------
+
 # DATA
-# ------------------------------------------
 df = pd.read_csv(DATA_PATH)
 
 df = df.dropna(subset=["comment", "parent_comment"])
@@ -106,9 +78,8 @@ parents = [clean_text(t) for t in parents]
 
 print(f"Train: {len(c_train)}, Val: {len(c_val)}, Test: {len(c_test)}")
 
-# ------------------------------------------
+
 # VOCABULARY (shared between comment and parent_comment)
-# ------------------------------------------
 PAD_TOKEN, OOV_TOKEN = "<PAD>", "<OOV>"
 
 counter = Counter()
@@ -132,9 +103,7 @@ def text_to_ids(text, max_len):
     return ids
 
 
-# ---------------------------------------------------------
 # DATASET / DATALOADER (returns comment, parent, label)
-# ---------------------------------------------------------
 class SarcasmDataset(Dataset):
     def __init__(self, comments, parents, labels):
         self.comments = comments
@@ -161,9 +130,8 @@ train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True)
 val_loader = DataLoader(val_ds, batch_size=BATCH_SIZE)
 test_loader = DataLoader(test_ds, batch_size=BATCH_SIZE)
 
-# ------------------------------------------
+
 # ATTENTION MODULE
-# ------------------------------------------
 class Attention(nn.Module):
     """
     Additive (Bahdanau-style) attention over LSTM outputs.
@@ -185,23 +153,20 @@ class Attention(nn.Module):
         scores = self.context_vector(energy).squeeze(-1)
 
         scores = scores.masked_fill(mask == 0, -1e9)
-        weights = F.softmax(scores, dim=1)                # (batch, seq_len)
+        weights = F.softmax(scores, dim=1)
 
         # weighted sum of LSTM outputs - single vector per sequence
         weighted = torch.bmm(weights.unsqueeze(1), lstm_out).squeeze(1)  # (batch, hidden_dim)
         return weighted, weights
 
 
-# ---------------------------------------------------------------------
+
 # MODEL: dual-branch LSTM + attention, embeddings trained from scratch
-# ---------------------------------------------------------------------
 class SarcasmLSTMWithAttention(nn.Module):
     def __init__(self, vocab_size, embed_dim, hidden_dim, pad_idx=0):
         super().__init__()
-
         # Embedding layer trained from scratch, no pretrained vectors.
-        # Shared between comment and parent_comment branches since they
-        # use the same vocabulary and the same word meanings.
+        # Shared between comment and parent_comment branches since they use the same vocabulary and the same word meanings.
         self.embedding = nn.Embedding(vocab_size, embed_dim, padding_idx=pad_idx)
 
         self.comment_lstm = nn.LSTM(
@@ -263,9 +228,8 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer, mode="min", factor=0.3, patience=1
 )
 
-# ---------------------------------------------------------------------
+
 # TRAINING
-# ---------------------------------------------------------------------
 best_val_loss = float("inf")
 patience_counter = 0
 best_state = None
@@ -321,9 +285,8 @@ for epoch in range(1, EPOCHS + 1):
 if best_state is not None:
     model.load_state_dict(best_state)
 
-# ---------------------------------------------------------------------
+
 # EVALUATION
-# ---------------------------------------------------------------------
 model.eval()
 all_preds, all_labels, all_probs = [], [], []
 with torch.no_grad():
@@ -345,18 +308,16 @@ print(classification_report(all_labels, all_preds, target_names=["not sarcasm", 
 print("Confusion matrix:")
 print(confusion_matrix(all_labels, all_preds))
 
-# ---------------------------------------------------------------------
+
 # SAVE MODEL AND VOCAB
-# ---------------------------------------------------------------------
 torch.save(model.state_dict(), "sarcasm_lstm_attention_model.pt")
 with open("vocab.pkl", "wb") as f:
     pickle.dump(vocab, f)
 
 print("\nModel and vocabulary saved (sarcasm_lstm_attention_model.pt, vocab.pkl).")
 
-# ---------------------------------------------------------------------
+
 # INFERENCE HELPER
-# ---------------------------------------------------------------------
 def predict_sarcasm(comment_text, parent_text="", threshold=0.5):
     model.eval()
     c_clean = clean_text(comment_text)
