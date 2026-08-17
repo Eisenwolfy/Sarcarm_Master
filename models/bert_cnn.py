@@ -179,11 +179,7 @@ test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, num_workers=2)
 
 # CNN BRANCH 
 class CNNTextBranch(nn.Module):
-    """
-    Parallel 1D convolutions over BERT token embeddings, several kernel
-    sizes, each followed by ReLU + max-over-time pooling. This is the
-    ONLY sequence-modeling component in this version — no LSTM.
-    """
+    #Parallel 1D convolutions over BERT token embenddings
 
     def __init__(self, input_dim, num_filters, kernel_sizes):
         super().__init__()
