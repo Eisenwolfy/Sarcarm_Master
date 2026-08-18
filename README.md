@@ -345,29 +345,8 @@ Sarcarm_Master/
 │   ├── lstm_bert_cnn.py
 │   └── final_model.py
 │
-├── front/
-│   ├── interface.py
-│   └── sad-koi.gif
-│
-├── main.py
 └── README.md
 ```
-
----
-
-# Application
-
-The project also includes a small PyQt5 interface for running inference on a comment.
-
-The interface accepts:
-
-* a Reddit comment;
-* an optional parent comment;
-
-and returns:
-
-* predicted class;
-* model confidence.
 
 ---
 
@@ -408,4 +387,3 @@ The project therefore demonstrates an important practical ML lesson:
 * scikit-learn
 * NumPy
 * Pandas
-* PyQt5
